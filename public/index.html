@@ -3,11 +3,35 @@
 
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=0.8">
   <title>DCI</title>
   <style>
     .sticky {
+      position: -webkit-sticky;
       position: sticky;
+      top: 0;
+      background-color: white;
+      z-index: 1000;
+      padding-bottom: 2px;
+    }
+
+    th {
+      position: -webkit-sticky;
+      position: sticky;
+      top: 68px;
+      background-color: white;
+      z-index: 1001;
+      padding-bottom: 4px;
+    }
+
+    button.bluelink {
+      background: none !important;
+      border: none;
+      padding: 0 !important;
+      /*input has OS specific font-family*/
+      color: #069;
+      text-decoration: underline;
+      cursor: pointer;
     }
 
     .right {
@@ -35,7 +59,7 @@
     }
 
     body {
-      padding-left: 2rem;
+      padding-left: 1rem;
     }
 
     button {
@@ -45,25 +69,27 @@
 </head>
 
 <body>
-  <div>
-    <h2>
-      Discord Call In - Host Panel
-    </h2>
+  <h2>
+    Discord Call In - Host Panel
+  </h2>
+  <div class="sticky">
     <h3>
       Callers Waiting: <span id="callers_num">0</span>
       <br>
       Screeners Available: <span id="screeners_num">0/0</span>
       <br>
-      Auto refresh waiting list: <span id="auto_status" class="green">ON</span> <a href="#"
-        onclick="ToggleUpdates()">Click to toggle.</a>
+      Auto refresh waiting list: <span id="auto_status" class="green">ON</span>
+      <button class="bluelink" onclick="ToggleUpdates()">Click to toggle.</button>
     </h3>
   </div>
   <div>
     <table>
       <thead>
-        <td></td>
-        <td>Caller Name</td>
-        <td>Times Screened this session</td>
+        <tr>
+          <th></th>
+          <th>Caller Name</th>
+          <th>Times Screened this session</th>
+        </tr>
       </thead>
       <tbody>
       </tbody>
