@@ -1,0 +1,18 @@
+{
+  "name": "discord-call-in",
+  "version": "0.0.1",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node main.js"
+  },
+  "author": "Kory Powell",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^12.4.1",
+    "express": "^4.17.1",
+    "helmet": "^4.2.0",
+    "socket.io": "^2.3.0"
+  }
+}
