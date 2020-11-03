@@ -87,8 +87,8 @@ botClient.login(secrets.bot_key);
 
 botClient.on('ready', () => {
   console.log(`Discord Bot client connection ready!`);
-  voiceChanIds.waiting = botClient.channels.cache.find((chan) => chan.name === config.waiting_room_name).id;
-  voiceChanIds.screening = botClient.channels.cache.filter((chan) => chan.name.startsWith(config.screening_rooms_prefix)).map((val) => (val.id));
+  voiceChanIds.waiting = botClient.channels.cache.find((chan) => chan.name === config.waiting_room_name && chan.type === 'voice').id;
+  voiceChanIds.screening = botClient.channels.cache.filter((chan) => chan.name.startsWith(config.screening_rooms_prefix) && chan.type === 'voice').map((val) => (val.id));
 });
 
 botClient.on('guildCreate', (guild) => {
