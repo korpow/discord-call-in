@@ -19,16 +19,14 @@ $.when($.ready).then(() => {
 
 function WaitingAdd(callerData) {
   callerArray.push(callerData);
-  if (updatesOn) {
+  if (updatesOn)
     UpdateCallerDisplay();
-  }
 }
 
 function WaitingRemove(callerId) {
   callerArray.splice(callerArray.findIndex(val => val.id === callerId), 1);
-  if (updatesOn) {
+  if (updatesOn)
     UpdateCallerDisplay();
-  }
 }
 
 function ToggleUpdates() {
@@ -54,11 +52,11 @@ function UpdateCallerDisplay() {
     return ` <tr>
     <td><button onclick="SelectCaller(this)" value="${caller.id}">Select</button></td>
     <td style="max-width: 14rem;">${caller.name}</td>
-    <td>${(callerTimesPicked[caller.id]) ? callerTimesPicked[caller.id] : "0"} times</td>
-    <td onclick="ToggleCallerInfo('${caller.id}')">${(caller.infoHidden) ? "[Hidden - Click to Unhide]" : caller.info}</td>
+    <td>${(callerTimesPicked[caller.id]) ? (callerTimesPicked[caller.id] + (callerTimesPicked[caller.id] === 1) ? " time" : " times") : "0 times"}</td>
+    <td><span onclick="ToggleCallerInfo('${caller.id}', this)">${(caller.infoHidden) ? "[Hidden - Click to Unhide]" : caller.info}</span></td>
   </tr>`
   }).join('\n');
-  if(callerArray.length == 0) {
+  if (callerArray.length == 0) {
     newCallerRows = `<td></td><td>No Callers Waiting :(</td>`;
   }
   $('tbody').empty();
@@ -70,15 +68,21 @@ function UpdateCallerName(callerId, newName) {
   if (callerIndex == -1)
     return;
   callerArray[callerIndex].name = newName;
-  UpdateCallerDisplay();
+  if (updatesOn)
+    UpdateCallerDisplay();
 }
 
-function ToggleCallerInfo(callerId) {
+function ToggleCallerInfo(callerId, span) {
   let callerIndex = callerArray.findIndex(caller => caller.id === callerId);
   if (callerIndex == -1)
     return;
   callerArray[callerIndex].infoHidden = !callerArray[callerIndex].infoHidden;
-  UpdateCallerDisplay();
+  if (callerArray[callerIndex].infoHidden) {
+    span.innerHTML = "[Hidden - Click to Unhide]";
+  }
+  else {
+    span.innerHTML = callerArray[callerIndex].info;
+  }
 }
 
 function UpdateCallerInfo(callerId, newInfo) {
@@ -86,7 +90,8 @@ function UpdateCallerInfo(callerId, newInfo) {
   if (callerIndex == -1)
     return;
   callerArray[callerIndex].info = newInfo;
-  UpdateCallerDisplay();
+  if (updatesOn)
+    UpdateCallerDisplay();
 }
 
 function SelectCaller(button) {

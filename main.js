@@ -59,7 +59,7 @@ function SendInitialData(socket) {
       return {
         name: sanitizeHtml(member.displayName, { allowedTags: [], disallowedTagsMode: 'escape' }),
         id: member.id,
-        info: (callerInfos[member.id] ? callerInfos[member.id] : ""),
+        info: (callerInfos[member.id]) ? callerInfos[member.id] : "",
         infoHidden: false
       }
     }
