@@ -10,6 +10,7 @@ $.when($.ready).then(() => {
   socket.on('numbers_data', ParseNumbersData); //caller and screener numbers
   socket.on('wait_join', WaitingAdd);
   socket.on('wait_leave', WaitingRemove);
+  socket.on('nick_update', UpdateCallerName);
   socket.on('backend_error', (message) => {
     alert(message);
   });
@@ -18,14 +19,14 @@ $.when($.ready).then(() => {
 function WaitingAdd(callerData) {
   callerArray.push(callerData);
   if (updatesOn) {
-    UpdateCallerRows();
+    UpdateCallerDisplay();
   }
 }
 
 function WaitingRemove(callerId) {
   callerArray.splice(callerArray.findIndex(val => val.id === callerId), 1);
   if (updatesOn) {
-    UpdateCallerRows();
+    UpdateCallerDisplay();
   }
 }
 
@@ -34,7 +35,7 @@ function ToggleUpdates() {
   if (updatesOn) {
     $('#auto_status').removeClass('orange');
     $('#auto_status').text("ON");
-    UpdateCallerRows(callerArray);
+    UpdateCallerDisplay(callerArray);
   }
   else {
     $('#auto_status').addClass('orange');
@@ -44,19 +45,27 @@ function ToggleUpdates() {
 
 function SetInitialData(data) {
   callerArray = data;
-  UpdateCallerRows()
+  UpdateCallerDisplay()
 }
 
-function UpdateCallerRows() {
+function UpdateCallerDisplay() {
   let newCallerRows = callerArray.sort(SortByName).map((caller) => {
-    return `<tr>
+    return ` <tr>
     <td><button onclick="SelectCaller(this)" value="${caller.id}">Select</button></td>
     <td>${caller.name}</td>
-    <td>${(callerTimesPicked[caller.id]) ? callerTimesPicked[caller.id] : "Not yet screened"}</td>
+    <td>${(callerTimesPicked[caller.id]) ? callerTimesPicked[caller.id] : "0"} times</td>
   </tr>`
   }).join('\n');
   $('tbody').empty();
   $('tbody').append(newCallerRows);
+}
+
+function UpdateCallerName(callerId, newName) {
+  let callerIndex = callerArray.findIndex(caller => caller.id === callerId);
+  if (callerIndex == -1)
+    return;
+  callerArray[callerIndex].name = newName;
+  UpdateCallerDisplay();
 }
 
 function SelectCaller(button) {

@@ -99,6 +99,13 @@ botClient.on('guildDelete', (guild) => {
   console.log(`I have been removed from: ${guild.name} (id: ${guild.id})`);
 });
 
+botClient.on('guildMemberUpdate', (oldState, newState) => {
+  if (newState.voice.channelID === voiceChanIds.waiting && oldState.displayName !== newState.displayName) {
+    // client updated their nickname after joining the lobby
+    io.emit('nick_update', newState.id, newState.displayName);
+  }
+});
+
 botClient.on('voiceStateUpdate', (oldState, newState) => {
   if (oldState.channelID === newState.channelID) //ignore changes not related to join, leave, or moving between channels
     return
