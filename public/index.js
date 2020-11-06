@@ -11,6 +11,7 @@ $.when($.ready).then(() => {
   socket.on('wait_join', WaitingAdd);
   socket.on('wait_leave', WaitingRemove);
   socket.on('nick_update', UpdateCallerName);
+  socket.on('info_update', UpdateCallerInfo);
   socket.on('backend_error', (message) => {
     alert(message);
   });
@@ -52,10 +53,14 @@ function UpdateCallerDisplay() {
   let newCallerRows = callerArray.sort(SortByName).map((caller) => {
     return ` <tr>
     <td><button onclick="SelectCaller(this)" value="${caller.id}">Select</button></td>
-    <td>${caller.name}</td>
+    <td style="max-width: 14rem;">${caller.name}</td>
     <td>${(callerTimesPicked[caller.id]) ? callerTimesPicked[caller.id] : "0"} times</td>
+    <td onclick="ToggleCallerInfo('${caller.id}')">${(caller.infoHidden) ? "[Hidden - Click to Unhide]" : caller.info}</td>
   </tr>`
   }).join('\n');
+  if(callerArray.length == 0) {
+    newCallerRows = `<td></td><td>No Callers Waiting :(</td>`;
+  }
   $('tbody').empty();
   $('tbody').append(newCallerRows);
 }
@@ -65,6 +70,22 @@ function UpdateCallerName(callerId, newName) {
   if (callerIndex == -1)
     return;
   callerArray[callerIndex].name = newName;
+  UpdateCallerDisplay();
+}
+
+function ToggleCallerInfo(callerId) {
+  let callerIndex = callerArray.findIndex(caller => caller.id === callerId);
+  if (callerIndex == -1)
+    return;
+  callerArray[callerIndex].infoHidden = !callerArray[callerIndex].infoHidden;
+  UpdateCallerDisplay();
+}
+
+function UpdateCallerInfo(callerId, newInfo) {
+  let callerIndex = callerArray.findIndex(caller => caller.id === callerId);
+  if (callerIndex == -1)
+    return;
+  callerArray[callerIndex].info = newInfo;
   UpdateCallerDisplay();
 }
 

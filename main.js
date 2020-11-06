@@ -5,6 +5,7 @@ const io = require('socket.io')(server);
 const secrets = require('./secrets.json'); // contains the bot_key for discord
 const config = require('./config.json');
 const Discord = require('discord.js');
+const sanitizeHtml = require('sanitize-html');
 const botClient = new Discord.Client();
 const voiceChanIds = {
   waiting: null,
@@ -56,8 +57,10 @@ function SendInitialData(socket) {
   socket.emit('initial_data', botClient.channels.cache.get(voiceChanIds.waiting).members.map(
     (member) => {
       return {
-        name: member.displayName,
-        id: member.id
+        name: sanitizeHtml(member.displayName, { allowedTags: [], disallowedTagsMode: 'escape' }),
+        id: member.id,
+        info: (callerInfos[member.id] ? callerInfos[member.id] : ""),
+        infoHidden: false
       }
     }
   ));
@@ -102,7 +105,7 @@ botClient.on('guildDelete', (guild) => {
 botClient.on('guildMemberUpdate', (oldState, newState) => {
   if (newState.voice.channelID === voiceChanIds.waiting && oldState.displayName !== newState.displayName) {
     // client updated their nickname after joining the lobby
-    io.emit('nick_update', newState.id, newState.displayName);
+    io.emit('nick_update', newState.id, sanitizeHtml(newState.displayName, { allowedTags: [], disallowedTagsMode: 'escape' }));
   }
 });
 
@@ -114,12 +117,51 @@ botClient.on('voiceStateUpdate', (oldState, newState) => {
 
   if (newState.channelID === voiceChanIds.waiting) {
     io.emit('wait_join', {
-      name: newState.member.displayName,
-      id: newState.member.id
+      name: sanitizeHtml(newState.member.displayName, { allowedTags: [], disallowedTagsMode: 'escape' }),
+      id: newState.member.id,
+      info: "",
+      infoHidden: false
     });
   }
 
   if (oldState.channelID === voiceChanIds.waiting) {
     io.emit('wait_leave', newState.member.id);
+    delete callerInfos[newState.member.id];
+  }
+});
+
+var callerInfos = {}; // {id: info,...}
+botClient.on('message', (message) => {
+  // don't listen to bots, or DMs
+  if (message.author.bot || message.channel.type === 'dm')
+    return;
+
+  if (message.content.startsWith(`!pickme`)) {
+    let newReason = sanitizeHtml(message.content.substr(8), { allowedTags: [], disallowedTagsMode: 'escape' });
+    if (newReason) {
+      if (message.member.voice.channelID !== voiceChanIds.waiting) {
+        message.react('❌');
+        message.channel.send(`Please use !pickme after connecting to the Waiting Lobby`);
+        return;
+      }
+      if (newReason.length > 255) {
+        message.react('❌');
+        message.channel.send(`!pickme info is too long. Must be under 255 characters.`);
+        return;
+      }
+
+      callerInfos[message.member.id] = newReason;
+      io.emit('info_update', message.member.id, newReason);
+      message.react('✅');
+      return;
+    }
+
+    message.channel.send(`**!pickme** command: Used to provide info while in the Waiting Lobby: \`!pickme <my reason for calling in>\``);
+  }
+
+  else if (message.content.startsWith(`!dontpickme`)) {
+    io.emit('info_update', message.member.id, "");
+    message.react('✅');
+    delete callerInfos[message.member.id];
   }
 });
