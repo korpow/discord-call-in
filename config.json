@@ -1,4 +1,5 @@
 {
-  "waiting_room_name": "Waiting Room",
-  "screening_rooms_prefix": "Screening Room"
+  "waiting_room_name": "Waiting Lobby",
+  "screening_rooms_prefix": "Screening Room",
+  "ignore_waiting_userids": ["Discord User ID"]
 }

@@ -14,19 +14,8 @@ const voiceChanIds = {
 
 app.use(express.static('public'));
 
-server.listen(3000);
-
 io.on('connection', (socket) => {
-
-  if (voiceChanIds.waiting) {
-    SendInitialData(socket);
-  }
-  else {
-    setTimeout(() => {
-      SendInitialData(socket);
-    }, 500);
-  }
-
+  SendInitialData(socket);
 
   socket.on('select_caller', (callerId, ack) => {
     let readyRooms = [];
@@ -54,16 +43,17 @@ io.on('connection', (socket) => {
 
 function SendInitialData(socket) {
   RunTheNumbers();
-  socket.emit('initial_data', botClient.channels.cache.get(voiceChanIds.waiting).members.map(
-    (member) => {
-      return {
-        name: sanitizeHtml(member.displayName, { allowedTags: [], disallowedTagsMode: 'escape' }),
-        id: member.id,
-        info: (callerInfos[member.id]) ? callerInfos[member.id] : "",
-        infoHidden: false
+  socket.emit('initial_data', botClient.channels.cache.get(voiceChanIds.waiting).members
+    .filter(member => !config.ignore_waiting_userids.includes(member.id)).map(
+      (member) => {
+        return {
+          name: sanitizeHtml(member.displayName, { allowedTags: [], disallowedTagsMode: 'escape' }),
+          id: member.id,
+          info: (callerInfos[member.id]) ? callerInfos[member.id] : "",
+          infoHidden: false
+        }
       }
-    }
-  ));
+    ));
 }
 
 function RunTheNumbers() {
@@ -80,7 +70,7 @@ function RunTheNumbers() {
     }
   });
   io.emit('numbers_data', {
-    waiting: botClient.channels.cache.get(voiceChanIds.waiting).members.size,
+    waiting: botClient.channels.cache.get(voiceChanIds.waiting).members.filter(member => !config.ignore_waiting_userids.includes(member.id)).size,
     screen_total: screenTotal,
     screen_ready: screenReady
   });
@@ -89,9 +79,11 @@ function RunTheNumbers() {
 botClient.login(secrets.bot_key);
 
 botClient.on('ready', () => {
-  console.log(`Discord Bot client connection ready!`);
+  console.log(`Discord connected and ready!`);
   voiceChanIds.waiting = botClient.channels.cache.find((chan) => chan.name === config.waiting_room_name && chan.type === 'voice').id;
   voiceChanIds.screening = botClient.channels.cache.filter((chan) => chan.name.startsWith(config.screening_rooms_prefix) && chan.type === 'voice').map((val) => (val.id));
+  server.listen(3000);
+  console.log(`Listening for HTTP connections!`);
 });
 
 botClient.on('guildCreate', (guild) => {
@@ -110,7 +102,7 @@ botClient.on('guildMemberUpdate', (oldState, newState) => {
 });
 
 botClient.on('voiceStateUpdate', (oldState, newState) => {
-  if (oldState.channelID === newState.channelID) //ignore changes not related to join, leave, or moving between channels
+  if (oldState.channelID === newState.channelID || config.ignore_waiting_userids.includes(newState.member.id)) //ignore changes not related to join, leave, or moving between channels
     return
 
   RunTheNumbers();
@@ -141,7 +133,7 @@ botClient.on('message', (message) => {
     if (newReason) {
       if (message.member.voice.channelID !== voiceChanIds.waiting) {
         message.react('❌');
-        message.channel.send(`Please use !pickme after connecting to the Waiting Lobby`);
+        message.channel.send(`Please use !pickme only after connecting to the ${config.waiting_room_name}.`);
         return;
       }
       if (newReason.length > 255) {
@@ -156,7 +148,7 @@ botClient.on('message', (message) => {
       return;
     }
 
-    message.channel.send(`**!pickme** command: Used to provide info while in the Waiting Lobby: \`!pickme <my reason for calling in>\``);
+    message.channel.send(`**!pickme** command: Used to provide info while in the ${config.waiting_room_name}\nex.\`!pickme I have a question about xyz\``);
   }
 
   else if (message.content.startsWith(`!dontpickme`)) {
