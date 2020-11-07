@@ -17,27 +17,23 @@ app.use(express.static('public'));
 io.on('connection', (socket) => {
   SendInitialData(socket);
 
-  socket.on('select_caller', (callerId, ack) => {
-    let readyRooms = [];
-    voiceChanIds.screening.forEach(chan => {
-      if (botClient.channels.cache.get(chan).members.size === 1 && !botClient.channels.cache.get(chan).members.first().voice.selfDeaf) {
-        readyRooms.push(chan);
-      }
-    });
-    if (readyRooms.length < 1) {
-      ack('no_screeners');
-      return;
-    }
-
-    let pickedRoom = readyRooms[Math.floor(Math.random() * readyRooms.length)];
+  socket.on('select_caller', (callerId, buttonText, ack) => {
     let selectedClient = botClient.channels.cache.get(voiceChanIds.waiting).members.get(callerId);
     if (!selectedClient) {
       ack('not_waiting');
       return;
     }
 
-    selectedClient.voice.setChannel(pickedRoom, "Selected for Screening");
-    ack('success');
+    switch(buttonText) {
+      case "Unmute":
+        selectedClient.voice.setMute(false);
+        ack('success');
+        break;
+      case "End Call":
+        selectedClient.voice.setChannel(null, 'Hang up caller');
+        ack('success2');
+        break;
+    }
   })
 })
 

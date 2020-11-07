@@ -50,9 +50,8 @@ function SetInitialData(data) {
 function UpdateCallerDisplay() {
   let newCallerRows = callerArray.sort(SortByName).map((caller) => {
     return ` <tr>
-    <td><button onclick="SelectCaller(this)" value="${caller.id}">Select</button></td>
+    <td><button onclick="SelectCaller(this)" value="${caller.id}">Unmute</button></td>
     <td style="max-width: 14rem;">${caller.name}</td>
-    <td>${(callerTimesPicked[caller.id]) ? (callerTimesPicked[caller.id] + (callerTimesPicked[caller.id] === 1) ? " time" : " times") : "0 times"}</td>
     <td><span onclick="ToggleCallerInfo('${caller.id}', this)">${(caller.infoHidden) ? "[Hidden - Click to Unhide]" : caller.info}</span></td>
   </tr>`
   }).join('\n');
@@ -96,18 +95,15 @@ function UpdateCallerInfo(callerId, newInfo) {
 
 function SelectCaller(button) {
   button.disabled = true;
-  socket.emit('select_caller', button.value, (result) => {
+  socket.emit('select_caller', button.value, button.innerText, (result) => {
     switch (result) {
       case 'success':
-        button.innerText = 'Selected';
-        callerTimesPicked[button.value] ? callerTimesPicked[button.value]++ : callerTimesPicked[button.value] = 1;
-        break;
-      case 'no_screeners':
         setTimeout(() => {
           button.disabled = false;
         }, 350);
-        alert("No screeners are available for this caller, please try again when one is available.");
+        button.innerText = 'End Call';
         break;
+      case 'success2':
       case 'not_waiting':
         button.innerText = 'Caller Gone';
         break;
@@ -117,7 +113,6 @@ function SelectCaller(button) {
 
 function ParseNumbersData(data) {
   $('#callers_num').text(data.waiting);
-  $('#screeners_num').text(`${data.screen_ready}/${data.screen_total}`);
 }
 
 
